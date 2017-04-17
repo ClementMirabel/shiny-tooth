@@ -3,6 +3,7 @@ module.exports = function(server, conf){
 
 	var net = require('net');
 	var clients = []
+	var handlers = require('./websocket.handlers')(server, clients, conf);
 
 	if(conf.connection_label){
 		var server_socket = server.select(conf.connection_label);
@@ -16,7 +17,6 @@ module.exports = function(server, conf){
 	}
 
 	var socketServer = net.createServer(function(socket) {
-		var handlers = require('./websocket.handlers')(server, clients, conf);
 		
 		clients.push(socket);
 		// socket.write('Echo server\r\n');
@@ -30,6 +30,9 @@ module.exports = function(server, conf){
 			if(textChunk == "emit_with_callback"){
 				handlers.executeTasks();
 			}
+		});
+		socket.on('end', function () {
+			clients.splice(clients.indexOf(socket), 1);
 		});
 		// socket.pipe(socket)
 	});
